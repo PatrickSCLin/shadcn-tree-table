@@ -27,13 +27,24 @@ npx shadcn add "https://mrlightful.com/registry/tree-view"
 ### Props
 #### Tree View
 ```tsx
+type TreeRenderItemParams = {
+  item: TreeDataItem
+  level: number
+  isLeaf: boolean
+  isSelected: boolean
+  isOpen?: boolean
+  hasChildren: boolean
+}
+
 type TreeProps = React.HTMLAttributes<HTMLDivElement> & {
-    data: TreeDataItem[] | TreeDataItem
-    initialSelectedItemId?: string
-    onSelectChange?: (item: TreeDataItem | undefined) => void
-    expandAll?: boolean
-    defaultNodeIcon?: any
-    defaultLeafIcon?: any
+  data: TreeDataItem[] | TreeDataItem
+  initialSelectedItemId?: string
+  onSelectChange?: (item: TreeDataItem | undefined) => void
+  expandAll?: boolean
+  defaultNodeIcon?: any
+  defaultLeafIcon?: any
+  onDocumentDrag?: (sourceItem: TreeDataItem, targetItem: TreeDataItem) => void
+  renderItem?: (params: TreeRenderItemParams) => React.ReactNode
 }
 ```
 
@@ -52,6 +63,51 @@ interface TreeDataItem {
     droppable?: boolean
     disabled?: boolean
 }
+```
+
+### Custom item renderer
+
+Use the `renderItem` prop to customize how each node/leaf row is rendered while
+keeping all built–in behaviors (expand/collapse, selection, drag & drop, disabled).
+
+```tsx
+import {
+  TreeView,
+  type TreeDataItem,
+  type TreeRenderItemParams,
+} from '@/components/ui/tree-view'
+
+function renderItem({
+  item,
+  level,
+  isLeaf,
+  isSelected,
+  isOpen,
+  hasChildren,
+}: TreeRenderItemParams) {
+  return (
+    <div className="flex w-full items-center gap-3 text-sm">
+      {/* Example: indentation / dependency column */}
+      <div className="flex items-center" style={{ paddingLeft: level * 12 }}>
+        {hasChildren && (
+          <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-border text-[10px]">
+            {isOpen ? '-' : '+'}
+          </span>
+        )}
+      </div>
+
+      {/* Main title column */}
+      <div className="flex-1 truncate">{item.name}</div>
+
+      {/* Extra meta columns – can use custom fields on your data */}
+      <div className="w-24 text-xs text-muted-foreground text-right">
+        {isLeaf ? 'Leaf' : 'Node'}
+      </div>
+    </div>
+  )
+}
+
+<TreeView data={data} renderItem={renderItem} />
 ```
 
 ### Basic
@@ -97,7 +153,7 @@ const data: TreeDataItem[] = [
 ## Roadmap
 - [ ] Add support for programmatically controlling items (https://github.com/romatallinn/shadcn-tree-view/issues/2).
 - [ ] Add support for striped and non-striped variants of the tree (https://github.com/romatallinn/shadcn-tree-view/issues/3).
-- [ ] Add support for custom item renderers (https://github.com/romatallinn/shadcn-tree-view/issues/4).
+- [x] Add support for custom item renderers (https://github.com/romatallinn/shadcn-tree-view/issues/4).
 
 # License
 Licensed under the MIT license, see [`LICENSE`](LICENSE).

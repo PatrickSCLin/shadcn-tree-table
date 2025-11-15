@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Notion 風格暗色主題 */
+  --background: 255 255 255;
+  --foreground: 55 53 47;
+  --accent: 241 241 239;
+  --accent-foreground: 55 53 47;
+  --primary: 46 170 220;
+  --primary-foreground: 255 255 255;
+}
+
+body {
+  color: rgb(55, 53, 47);
+  background: rgb(255, 255, 255);
+}
+
+/* 強制使用暗色主題 */
+html {
+  background: rgb(25, 25, 25);
+}
+
+body {
+  color: rgb(232, 232, 231);
+  background: rgb(25, 25, 25);
+  min-height: 100vh;
+}
+
