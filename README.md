@@ -2,7 +2,15 @@
 
 A powerful tree table component for Shadcn UI that combines hierarchical tree navigation with table columns, inspired by [shadcn-tree-view](https://github.com/romatallinn/shadcn-tree-view).
 
-![Demo](./demo.mp4)
+<table>
+  <tr>
+    <td width="800">
+      <video src="https://github.com/user-attachments/assets/c880198d-27b6-4555-86da-94eca6211f8f"
+             width="100%" controls autoplay loop muted playsinline>
+      </video>
+    </td>
+  </tr>
+</table>
 
 ## What's New & Improved
 
@@ -27,32 +35,8 @@ This component extends the original `shadcn-tree-view` with the following enhanc
 
 ## Installation
 
-### Option 1: Direct URL (Recommended)
-
 ```sh
-npx shadcn add "https://raw.githubusercontent.com/YOUR_USERNAME/shadcn-tree-view/main/schema.json"
-```
-
-Replace `YOUR_USERNAME` with your GitHub username.
-
-### Option 2: GitHub Raw URL
-
-If you have a `schema.json` file in your repository root:
-
-```sh
-npx shadcn add "https://raw.githubusercontent.com/YOUR_USERNAME/shadcn-tree-view/main/schema.json"
-```
-
-### Option 3: Local Development
-
-For local development, you can copy the component directly:
-
-```sh
-# Copy tree-view component
-cp src/tree-view.tsx your-project/components/ui/tree-view.tsx
-
-# Copy tree-table component  
-cp demo/components/tree-table.tsx your-project/components/ui/tree-table.tsx
+npx shadcn add "https://raw.githubusercontent.com/patricksclin/shadcn-tree-table/main/schema.json"
 ```
 
 ## Usage
@@ -196,43 +180,6 @@ interface TreeTableItem extends TreeDataItem {
 }
 ```
 
-## Setting Up Shadcn Registry
-
-To make `npx shadcn add tree-table` work, you need to:
-
-1. **Create a schema.json file** in your repository root (see `scripts/create-schema-tree-table.js`)
-
-2. **Host the schema.json file** publicly accessible via URL:
-   - GitHub: Use raw.githubusercontent.com URL
-   - Your own server: Host the JSON file
-   - CDN: Upload to a CDN service
-
-3. **Update shadcn.json** in your project (if using custom registry):
-
-```json
-{
-  "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "default",
-  "rsc": true,
-  "tsx": true,
-  "tailwind": {
-    "config": "tailwind.config.js",
-    "css": "app/globals.css",
-    "baseColor": "slate",
-    "cssVariables": true
-  },
-  "aliases": {
-    "components": "@/components",
-    "utils": "@/lib/utils"
-  }
-}
-```
-
-4. **Use the component**:
-
-```sh
-npx shadcn add "https://raw.githubusercontent.com/YOUR_USERNAME/shadcn-tree-view/main/schema.json"
-```
 
 ## Development
 
