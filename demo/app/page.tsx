@@ -1,6 +1,6 @@
 'use client'
 
-import { TreeTable, type TreeTableItem } from '../components/tree-table'
+import { TreeTable, type TreeTableItem } from '@/components/ui/tree-table'
 
 const data: TreeTableItem[] = [
   {

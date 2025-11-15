@@ -11,7 +11,7 @@ import React, {
 import * as AccordionPrimitive from '@radix-ui/react-accordion'
 import { ChevronRight } from 'lucide-react'
 import { cva } from 'class-variance-authority'
-import { cn } from '../lib/utils'
+import { cn } from '@/lib/utils'
 import { 
     TreeView as BaseTreeView,
     TreeItem as BaseTreeItem,
@@ -1068,3 +1068,4 @@ export function TreeTable({ data }: TreeTableProps) {
 }
 
 export { TreeView }
+

@@ -1,31 +1,167 @@
-# Tree View - [Shadcn UI](https://ui.shadcn.com/)
-The Tree View component allows you to navigate hierarchical lists of data with nested levels that can be expanded and collapsed.
+# Tree Table - [Shadcn UI](https://ui.shadcn.com/)
 
-Based on [implementation](https://github.com/shadcn-ui/ui/issues/355#issuecomment-1703767574) by [WangLarry](https://github.com/WangLarry) and [bytechase](https://github.com/bytechase).
+A powerful tree table component for Shadcn UI that combines hierarchical tree navigation with table columns, inspired by [shadcn-tree-view](https://github.com/romatallinn/shadcn-tree-view).
 
-![demo gif](./demo.gif)
+![Demo](./demo.mp4)
 
-### [DEMO](https://mrlightful.com/ui/tree-view)
+## What's New & Improved
+
+This component extends the original `shadcn-tree-view` with the following enhancements:
+
+- **📊 Table Layout**: Display tree items in a multi-column table format with resizable columns
+- **🎨 Notion-style Design**: Beautiful dark theme with smooth hover and selection states
+- **🔧 Advanced Customization**: Full control over column rendering with `renderItem` prop
+- **📐 Precise Spacing Control**: Fixed spacing calculations for perfect column alignment
+- **🔀 Component Separation**: Clean separation between `TreeView` (base) and `TreeTable` (enhanced) components
+- **📦 Exportable Components**: Internal components exported for maximum flexibility
 
 ## Features
-- [x] Expand, collapse, and select items.
-- [x] Custom icons per item (default, open, selected).
-- [x] Default node & leaf icons per tree view.
-- [x] Action buttons (e.g. a button to add a new item).
-- [x] Click handlers per tree item and per the entire tree view.
-- [x] Drag & drop support.
-- [x] Disabled state. 
+
+- [x] Expand, collapse, and select items
+- [x] Multi-column table layout with resizable columns
+- [x] Custom item renderer with full control over column content
+- [x] Drag & drop support
+- [x] Disabled state
+- [x] Notion-style dark theme
+- [x] Precise spacing and alignment control
 
 ## Installation
 
+### Option 1: Direct URL (Recommended)
+
 ```sh
-npx shadcn add "https://mrlightful.com/registry/tree-view"
+npx shadcn add "https://raw.githubusercontent.com/YOUR_USERNAME/shadcn-tree-view/main/schema.json"
+```
+
+Replace `YOUR_USERNAME` with your GitHub username.
+
+### Option 2: GitHub Raw URL
+
+If you have a `schema.json` file in your repository root:
+
+```sh
+npx shadcn add "https://raw.githubusercontent.com/YOUR_USERNAME/shadcn-tree-view/main/schema.json"
+```
+
+### Option 3: Local Development
+
+For local development, you can copy the component directly:
+
+```sh
+# Copy tree-view component
+cp src/tree-view.tsx your-project/components/ui/tree-view.tsx
+
+# Copy tree-table component  
+cp demo/components/tree-table.tsx your-project/components/ui/tree-table.tsx
 ```
 
 ## Usage
 
-### Props
-#### Tree View
+### Tree Table Component
+
+```tsx
+import { TreeTable, type TreeTableItem } from '@/components/ui/tree-table'
+
+const data: TreeTableItem[] = [
+  {
+    id: '1',
+    name: 'Task 1',
+    type: 'Folder',
+    owner: 'Alice',
+    status: 'Active',
+    updatedAt: '2024-11-01',
+    children: [
+      {
+        id: '2',
+        name: 'Task 1.1',
+        type: 'Document',
+        owner: 'Bob',
+        status: 'In progress',
+        updatedAt: '2024-11-03',
+      },
+    ],
+  },
+]
+
+<TreeTable data={data} />
+```
+
+### Custom Column Rendering
+
+The `TreeTable` component uses the `renderItem` prop to render custom table rows:
+
+```tsx
+const renderItem = ({
+  item,
+  level,
+  isSelected,
+}: TreeRenderItemParams) => {
+  const extended = item as TreeTableItem
+  
+  return (
+    <div className="grid text-sm" style={rowStyle}>
+      <div className="flex items-center">
+        <span>{extended.name}</span>
+      </div>
+      <div className="px-3">
+        <span>{extended.type ?? '—'}</span>
+      </div>
+      {/* More columns... */}
+    </div>
+  )
+}
+
+<TreeTable data={data} renderItem={renderItem} />
+```
+
+### Base Tree View Component
+
+You can also use the base `TreeView` component for simple tree navigation:
+
+```tsx
+import { TreeView, type TreeDataItem } from '@/components/ui/tree-view'
+
+const data: TreeDataItem[] = [
+  {
+    id: '1',
+    name: 'Item 1',
+    children: [
+      {
+        id: '2',
+        name: 'Item 1.1',
+      },
+    ],
+  },
+]
+
+<TreeView data={data} />
+```
+
+## Component Architecture
+
+This project provides two main components:
+
+1. **`TreeView`** (`src/tree-view.tsx`): Base tree component with expand/collapse, selection, and drag & drop
+2. **`TreeTable`** (`demo/components/tree-table.tsx`): Enhanced component that adds table layout and column management
+
+The `TreeTable` component:
+- Extends `TreeView` functionality
+- Uses custom `AccordionTrigger` and `TreeLeaf` components for precise spacing
+- Implements column resizing and layout management
+- Provides Notion-style theming
+
+## Props
+
+### TreeTable
+
+```tsx
+type TreeTableProps = {
+  data: TreeTableItem[]
+}
+```
+
+### TreeView
+
 ```tsx
 type TreeRenderItemParams = {
   item: TreeDataItem
@@ -48,112 +184,75 @@ type TreeProps = React.HTMLAttributes<HTMLDivElement> & {
 }
 ```
 
-#### Tree Item
+### TreeTableItem
+
 ```tsx
-interface TreeDataItem {
-    id: string
-    name: string
-    icon?: any
-    selectedIcon?: any
-    openIcon?: any
-    children?: TreeDataItem[]
-    actions?: React.ReactNode
-    onClick?: () => void
-    draggable?: boolean
-    droppable?: boolean
-    disabled?: boolean
+interface TreeTableItem extends TreeDataItem {
+  children?: TreeTableItem[]
+  type?: string
+  owner?: string
+  status?: string
+  updatedAt?: string
 }
 ```
 
-### Custom item renderer
+## Setting Up Shadcn Registry
 
-Use the `renderItem` prop to customize how each node/leaf row is rendered while
-keeping all built–in behaviors (expand/collapse, selection, drag & drop, disabled).
+To make `npx shadcn add tree-table` work, you need to:
 
-```tsx
-import {
-  TreeView,
-  type TreeDataItem,
-  type TreeRenderItemParams,
-} from '@/components/ui/tree-view'
+1. **Create a schema.json file** in your repository root (see `scripts/create-schema-tree-table.js`)
 
-function renderItem({
-  item,
-  level,
-  isLeaf,
-  isSelected,
-  isOpen,
-  hasChildren,
-}: TreeRenderItemParams) {
-  return (
-    <div className="flex w-full items-center gap-3 text-sm">
-      {/* Example: indentation / dependency column */}
-      <div className="flex items-center" style={{ paddingLeft: level * 12 }}>
-        {hasChildren && (
-          <span className="inline-flex h-4 w-4 items-center justify-center rounded border border-border text-[10px]">
-            {isOpen ? '-' : '+'}
-          </span>
-        )}
-      </div>
+2. **Host the schema.json file** publicly accessible via URL:
+   - GitHub: Use raw.githubusercontent.com URL
+   - Your own server: Host the JSON file
+   - CDN: Upload to a CDN service
 
-      {/* Main title column */}
-      <div className="flex-1 truncate">{item.name}</div>
+3. **Update shadcn.json** in your project (if using custom registry):
 
-      {/* Extra meta columns – can use custom fields on your data */}
-      <div className="w-24 text-xs text-muted-foreground text-right">
-        {isLeaf ? 'Leaf' : 'Node'}
-      </div>
-    </div>
-  )
+```json
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "default",
+  "rsc": true,
+  "tsx": true,
+  "tailwind": {
+    "config": "tailwind.config.js",
+    "css": "app/globals.css",
+    "baseColor": "slate",
+    "cssVariables": true
+  },
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils"
+  }
 }
-
-<TreeView data={data} renderItem={renderItem} />
 ```
 
-### Basic
-```tsx
-import { TreeView, TreeDataItem } from '@/components/ui/tree-view';
+4. **Use the component**:
 
-const data: TreeDataItem[] = [
-  {
-    id: '1',
-    name: 'Item 1',
-    children: [
-      {
-        id: '2',
-        name: 'Item 1.1',
-        children: [
-          {
-            id: '3',
-            name: 'Item 1.1.1',
-          },
-          {
-            id: '4',
-            name: 'Item 1.1.2',
-          },
-        ],
-      },
-      {
-        id: '5',
-        name: 'Item 1.2 (disabled)',
-        disabled: true
-      },
-    ],
-  },
-  {
-    id: '6',
-    name: 'Item 2 (draggable)',
-    draggable: true
-  },
-];
-
-<TreeView data={data} />;
+```sh
+npx shadcn add "https://raw.githubusercontent.com/YOUR_USERNAME/shadcn-tree-view/main/schema.json"
 ```
 
-## Roadmap
-- [ ] Add support for programmatically controlling items (https://github.com/romatallinn/shadcn-tree-view/issues/2).
-- [ ] Add support for striped and non-striped variants of the tree (https://github.com/romatallinn/shadcn-tree-view/issues/3).
-- [x] Add support for custom item renderers (https://github.com/romatallinn/shadcn-tree-view/issues/4).
+## Development
 
-# License
+```sh
+# Install dependencies
+pnpm install
+
+# Run demo
+cd demo
+pnpm dev
+
+# Create schema for tree-table
+node scripts/create-schema-tree-table.js
+```
+
+## Credits
+
+- Inspired by [shadcn-tree-view](https://github.com/romatallinn/shadcn-tree-view) by [romatallinn](https://github.com/romatallinn)
+- Based on [implementation](https://github.com/shadcn-ui/ui/issues/355#issuecomment-1703767574) by [WangLarry](https://github.com/WangLarry) and [bytechase](https://github.com/bytechase)
+
+## License
+
 Licensed under the MIT license, see [`LICENSE`](LICENSE).
