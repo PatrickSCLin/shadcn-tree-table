@@ -32,6 +32,10 @@ This component extends the original `shadcn-tree-view` with the following enhanc
 - [x] Disabled state
 - [x] Notion-style dark theme
 - [x] Precise spacing and alignment control
+- [x] Custom icons per item (default, open, selected)
+- [x] Default node & leaf icons per tree view
+- [x] Action buttons (e.g. a button to add a new item)
+- [x] Click handlers per tree item and per the entire tree view
 
 ## Installation
 
@@ -113,8 +117,28 @@ const data: TreeDataItem[] = [
       {
         id: '2',
         name: 'Item 1.1',
+        children: [
+          {
+            id: '3',
+            name: 'Item 1.1.1',
+          },
+          {
+            id: '4',
+            name: 'Item 1.1.2',
+          },
+        ],
+      },
+      {
+        id: '5',
+        name: 'Item 1.2 (disabled)',
+        disabled: true,
       },
     ],
+  },
+  {
+    id: '6',
+    name: 'Item 2 (draggable)',
+    draggable: true,
   },
 ]
 
@@ -161,8 +185,8 @@ type TreeProps = React.HTMLAttributes<HTMLDivElement> & {
   initialSelectedItemId?: string
   onSelectChange?: (item: TreeDataItem | undefined) => void
   expandAll?: boolean
-  defaultNodeIcon?: any
-  defaultLeafIcon?: any
+  defaultNodeIcon?: React.ComponentType<{ className?: string }>
+  defaultLeafIcon?: React.ComponentType<{ className?: string }>
   onDocumentDrag?: (sourceItem: TreeDataItem, targetItem: TreeDataItem) => void
   renderItem?: (params: TreeRenderItemParams) => React.ReactNode
 }
@@ -180,6 +204,24 @@ interface TreeTableItem extends TreeDataItem {
 }
 ```
 
+### TreeDataItem
+
+```tsx
+interface TreeDataItem {
+  id: string
+  name: string
+  icon?: React.ComponentType<{ className?: string }>
+  selectedIcon?: React.ComponentType<{ className?: string }>
+  openIcon?: React.ComponentType<{ className?: string }>
+  children?: TreeDataItem[]
+  actions?: React.ReactNode
+  onClick?: () => void
+  draggable?: boolean
+  droppable?: boolean
+  disabled?: boolean
+  className?: string
+}
+```
 
 ## Development
 
@@ -194,6 +236,13 @@ pnpm dev
 # Create schema for tree-table
 node scripts/create-schema-tree-table.js
 ```
+
+## Alternatives
+
+- [Kibo UI / Tree](https://www.kibo-ui.com/components/tree?utm_source=github&utm_medium=referral&utm_campaign=mrlightful/shadcn-tree-view)
+- [ReUI / Tree](https://reui.io/docs/tree?utm_source=github&utm_medium=referral&utm_campaign=mrlightful/shadcn-tree-view)
+- [Coss / Tree](https://coss.com/origin/tree?utm_source=github&utm_medium=referral&utm_campaign=mrlightful/shadcn-tree-view)
+- [Tree View Table (advanced)](https://github.com/PatrickSCLin/shadcn-tree-table)
 
 ## Credits
 
