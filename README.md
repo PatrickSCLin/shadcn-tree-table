@@ -17,6 +17,7 @@ A powerful tree table component for Shadcn UI that combines hierarchical tree na
 This component extends the original `shadcn-tree-view` with the following enhancements:
 
 - **📊 Table Layout**: Display tree items in a multi-column table format with resizable columns
+- **🖱️ Drag Handle Support**: Notion-style drag handles for precise row reordering
 - **🎨 Notion-style Design**: Beautiful dark theme with smooth hover and selection states
 - **🔧 Advanced Customization**: Full control over column rendering with `renderItem` prop
 - **📐 Precise Spacing Control**: Fixed spacing calculations for perfect column alignment
@@ -27,6 +28,7 @@ This component extends the original `shadcn-tree-view` with the following enhanc
 
 - [x] Expand, collapse, and select items
 - [x] Multi-column table layout with resizable columns
+- [x] Drag handle support (Notion-style)
 - [x] Custom item renderer with full control over column content
 - [x] Drag & drop support
 - [x] Disabled state
@@ -50,28 +52,13 @@ npx shadcn add "https://raw.githubusercontent.com/patricksclin/shadcn-tree-table
 ```tsx
 import { TreeTable, type TreeTableItem } from '@/components/ui/tree-table'
 
-const data: TreeTableItem[] = [
-  {
-    id: '1',
-    name: 'Task 1',
-    type: 'Folder',
-    owner: 'Alice',
-    status: 'Active',
-    updatedAt: '2024-11-01',
-    children: [
-      {
-        id: '2',
-        name: 'Task 1.1',
-        type: 'Document',
-        owner: 'Bob',
-        status: 'In progress',
-        updatedAt: '2024-11-03',
-      },
-    ],
-  },
-]
+// ... data definition ...
 
+// Standard dragging (entire row)
 <TreeTable data={data} />
+
+// Dragging via handle only (Notion-style)
+<TreeTable data={data} enableDragHandle={true} />
 ```
 
 ### Custom Column Rendering
@@ -165,6 +152,7 @@ The `TreeTable` component:
 ```tsx
 type TreeTableProps = {
   data: TreeTableItem[]
+  enableDragHandle?: boolean // default: false
 }
 ```
 
@@ -189,6 +177,7 @@ type TreeProps = React.HTMLAttributes<HTMLDivElement> & {
   defaultLeafIcon?: React.ComponentType<{ className?: string }>
   onDocumentDrag?: (sourceItem: TreeDataItem, targetItem: TreeDataItem) => void
   renderItem?: (params: TreeRenderItemParams) => React.ReactNode
+  enableDragHandle?: boolean
 }
 ```
 

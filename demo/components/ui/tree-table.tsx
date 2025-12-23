@@ -9,7 +9,7 @@ import React, {
     useState,
 } from 'react'
 import * as AccordionPrimitive from '@radix-ui/react-accordion'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, GripVertical } from 'lucide-react'
 import { cva } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 import { 
@@ -40,18 +40,24 @@ const rowSurfaceClasses =
     'relative cursor-pointer transition-colors hover:bg-white/5 data-[selected=true]:bg-[rgba(46,170,220,0.3)] data-[drag-over=true]:bg-[rgba(46,170,220,0.2)]'
 
 // Tree-table specific AccordionTrigger with level-based positioning
+type AccordionTriggerProps = React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger> & {
+    level?: number
+    isSelected?: boolean
+    isDragOver?: boolean
+    isOpen?: boolean
+    enableDragHandle?: boolean
+    setIsHoveringHandle?: (hovering: boolean) => void
+}
+
 const AccordionTrigger = React.forwardRef<
     React.ElementRef<typeof AccordionPrimitive.Trigger>,
-    React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Trigger> & {
-        level?: number
-        isSelected?: boolean
-        isDragOver?: boolean
-        isOpen?: boolean
-    }
->(({ className, children, level = 0, isSelected, isDragOver, isOpen, ...props }, ref) => {
+    AccordionTriggerProps
+>(({ className, children, level = 0, isSelected, isDragOver, isOpen, enableDragHandle = false, setIsHoveringHandle, ...props }: AccordionTriggerProps, ref: React.Ref<React.ElementRef<typeof AccordionPrimitive.Trigger>>) => {
     // ChevronRight 使用 absolute positioning，位置根據 level 動態調整
     // 基礎位置：10px（左側間距）+ level * 20px（縮排，每層增加 20px）
-    const chevronLeft = 10 + level * 20
+    // 如果有 drag handle，需要額外增加 16px（drag handle 寬度 + 4px margin）
+    const dragHandleWidth = enableDragHandle ? 20 : 0 
+    const chevronLeft = (enableDragHandle ? 30 : 10) + level * 20
     
     const selectedAttr = isSelected ? 'true' : 'false'
     const dragAttr = isDragOver ? 'true' : 'false'
@@ -73,8 +79,26 @@ const AccordionTrigger = React.forwardRef<
                 data-drag-over={dragAttr}
                 {...props}
             >
-                {/* 左側間距，保持固定 10px */}
+                {/* 左側間距 */}
                 <div style={{ width: '10px', flexShrink: 0 }} />
+                {/* Drag Handle - 當 enableDragHandle 為 true 時顯示，固定在最左側 */}
+                {enableDragHandle && (
+                    <GripVertical
+                        className="h-4 w-4 shrink-0 cursor-grab active:cursor-grabbing"
+                        style={{
+                            color: 'rgb(156, 156, 155)',
+                            position: 'absolute',
+                            left: '10px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            flexShrink: 0,
+                            marginRight: '4px',
+                            pointerEvents: 'auto'
+                        }}
+                        onMouseEnter={() => setIsHoveringHandle?.(true)}
+                        onMouseLeave={() => setIsHoveringHandle?.(false)}
+                    />
+                )}
                 {/* ChevronRight 使用 absolute positioning，根據 level 動態調整位置 */}
                 <ChevronRight 
                     className="h-4 w-4 shrink-0 transition-transform duration-200 chevron-icon" 
@@ -88,8 +112,8 @@ const AccordionTrigger = React.forwardRef<
                         flexShrink: 0 
                     }} 
                 />
-                {/* renderItem 內容從固定位置開始（10px + 20px ChevronRight + 4px margin = 34px），確保所有層級寬度一致 */}
-                <div style={{ marginLeft: '24px', flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                {/* renderItem 內容從固定位置開始，確保所有層級寬度一致 */}
+                <div style={{ marginLeft: enableDragHandle ? '60px' : '20px', flex: 1, minWidth: 0, overflow: 'hidden' }}>
                     {children}
                 </div>
             </AccordionPrimitive.Trigger>
@@ -101,7 +125,7 @@ AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName
 const AccordionContent = React.forwardRef<
     React.ElementRef<typeof AccordionPrimitive.Content>,
     React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+>(({ className, children, ...props }: React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>, ref: React.Ref<React.ElementRef<typeof AccordionPrimitive.Content>>) => (
     <AccordionPrimitive.Content
         ref={ref}
         className={cn(
@@ -173,6 +197,7 @@ const TreeNode = ({
     draggedItem,
     renderItem,
     level = 0,
+    enableDragHandle = false,
 }: {
     item: TreeDataItem
     handleSelectChange: (item: TreeDataItem | undefined) => void
@@ -185,16 +210,23 @@ const TreeNode = ({
     draggedItem: TreeDataItem | null
     renderItem?: (params: TreeRenderItemParams) => React.ReactNode
     level?: number
+    enableDragHandle?: boolean
 }) => {
     const [value, setValue] = React.useState(
         expandedItemIds.includes(item.id) ? [item.id] : []
     )
     const [isDragOver, setIsDragOver] = React.useState(false)
+    const [isHoveringHandle, setIsHoveringHandle] = React.useState(false)
     const hasChildren = !!item.children?.length
     const isSelected = selectedItemId === item.id
     const isOpen = value.includes(item.id)
 
     const onDragStart = (e: React.DragEvent) => {
+        // 如果啟用了 drag handle 且滑鼠不在 handle 上，則不允許拖動
+        if (enableDragHandle && !isHoveringHandle) {
+            e.preventDefault()
+            return
+        }
         // 默認所有項目都可以拖動，除非明確設置 draggable: false
         if (item.draggable === false) {
             e.preventDefault()
@@ -225,7 +257,7 @@ const TreeNode = ({
         <AccordionPrimitive.Root
             type="multiple"
             value={value}
-            onValueChange={(s) => setValue(s)}
+            onValueChange={(s: string[]) => setValue(s)}
         >
             <AccordionPrimitive.Item value={item.id}>
                 <AccordionTrigger
@@ -233,6 +265,8 @@ const TreeNode = ({
                     isSelected={isSelected}
                     isDragOver={isDragOver}
                     isOpen={isOpen}
+                    enableDragHandle={enableDragHandle}
+                    setIsHoveringHandle={setIsHoveringHandle}
                     className={cn(
                         treeVariants(),
                         isSelected && selectedTreeVariants(),
@@ -242,7 +276,7 @@ const TreeNode = ({
                         handleSelectChange(item)
                         item.onClick?.()
                     }}
-                    draggable={item.draggable !== false}
+                    draggable={enableDragHandle ? isHoveringHandle : (item.draggable !== false)}
                     onDragStart={onDragStart}
                     onDragOver={onDragOver}
                     onDragLeave={onDragLeave}
@@ -290,6 +324,7 @@ const TreeNode = ({
                         draggedItem={draggedItem}
                         renderItem={renderItem}
                         level={level + 1}
+                        enableDragHandle={enableDragHandle}
                     />
                 </AccordionContent>
             </AccordionPrimitive.Item>
@@ -298,19 +333,22 @@ const TreeNode = ({
 }
 
 // Tree-table specific TreeLeaf with spacing divs
+type TreeLeafProps = React.HTMLAttributes<HTMLDivElement> & {
+    item: TreeDataItem
+    level: number
+    selectedItemId?: string
+    handleSelectChange: (item: TreeDataItem | undefined) => void
+    defaultLeafIcon?: any
+    handleDragStart?: (item: TreeDataItem) => void
+    handleDrop?: (item: TreeDataItem) => void
+    draggedItem: TreeDataItem | null
+    renderItem?: (params: TreeRenderItemParams) => React.ReactNode
+    enableDragHandle?: boolean
+}
+
 const TreeLeaf = React.forwardRef<
     HTMLDivElement,
-    React.HTMLAttributes<HTMLDivElement> & {
-        item: TreeDataItem
-        level: number
-        selectedItemId?: string
-        handleSelectChange: (item: TreeDataItem | undefined) => void
-        defaultLeafIcon?: any
-        handleDragStart?: (item: TreeDataItem) => void
-        handleDrop?: (item: TreeDataItem) => void
-        draggedItem: TreeDataItem | null
-        renderItem?: (params: TreeRenderItemParams) => React.ReactNode
-    }
+    TreeLeafProps
 >(
     (
         {
@@ -324,16 +362,23 @@ const TreeLeaf = React.forwardRef<
             handleDrop,
             draggedItem,
             renderItem,
+            enableDragHandle = false,
             ...props
-        },
-        ref
+        }: TreeLeafProps,
+        ref: React.Ref<HTMLDivElement>
     ) => {
         const [isDragOver, setIsDragOver] = React.useState(false)
+        const [isHoveringHandle, setIsHoveringHandle] = React.useState(false)
         const isSelected = selectedItemId === item.id
         const dataSelected = isSelected ? 'true' : 'false'
         const dataDragOver = isDragOver ? 'true' : 'false'
 
         const onDragStart = (e: React.DragEvent) => {
+            // 如果啟用了 drag handle 且滑鼠不在 handle 上，則不允許拖動
+            if (enableDragHandle && !isHoveringHandle) {
+                e.preventDefault()
+                return
+            }
             // 默認所有項目都可以拖動，除非明確設置 draggable: false 或 disabled: true
             if (item.draggable === false || item.disabled) {
                 e.preventDefault()
@@ -387,19 +432,37 @@ const TreeLeaf = React.forwardRef<
                     handleSelectChange(item)
                     item.onClick?.()
                 }}
-                draggable={item.draggable !== false && !item.disabled}
+                draggable={enableDragHandle ? isHoveringHandle : (item.draggable !== false && !item.disabled)}
                 onDragStart={onDragStart}
                 onDragOver={onDragOver}
                 onDragLeave={onDragLeave}
                 onDrop={onDrop}
                 {...props}
             >
+                {/* 左側間距 */}
+                <div style={{ width: '10px', flexShrink: 0 }} />
+                {/* Drag Handle - 當 enableDragHandle 為 true 時顯示，固定在最左側 */}
+                {enableDragHandle && (
+                    <GripVertical
+                        className="h-4 w-4 shrink-0 cursor-grab active:cursor-grabbing"
+                        style={{
+                            color: 'rgb(156, 156, 155)',
+                            position: 'absolute',
+                            left: '10px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            flexShrink: 0,
+                            marginRight: '4px',
+                            pointerEvents: 'auto'
+                        }}
+                        onMouseEnter={() => setIsHoveringHandle(true)}
+                        onMouseLeave={() => setIsHoveringHandle(false)}
+                    />
+                )}
                 {renderItem ? (
                     <>
-                        {/* 左側間距，保持固定 10px */}
-                        <div style={{ width: '10px', flexShrink: 0 }} />
-                        {/* 占位元素，代替 ChevronRight，保持對齊（20px ChevronRight + 4px margin = 24px） */}
-                        <div style={{ width: '24px', flexShrink: 0 }} />
+                        {/* 占位元素，代替 ChevronRight，保持對齊 */}
+                        <div style={{ width: enableDragHandle ? '60px' : '20px', flexShrink: 0 }} />
                         {/* renderItem 內容從固定位置開始，確保所有層級寬度一致 */}
                         <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
                             {renderItem({
@@ -449,6 +512,7 @@ type TreeItemProps = {
     renderItem?: (params: TreeRenderItemParams) => React.ReactNode
     level?: number
     className?: string
+    enableDragHandle?: boolean
 }
 
 const TreeItem = React.forwardRef<HTMLDivElement, TreeItemProps>(
@@ -466,9 +530,10 @@ const TreeItem = React.forwardRef<HTMLDivElement, TreeItemProps>(
             draggedItem,
             renderItem,
             level,
+            enableDragHandle,
             ...props
-        },
-        ref
+        }: TreeItemProps,
+        ref: React.Ref<HTMLDivElement>
     ) => {
         if (!(data instanceof Array)) {
             data = [data]
@@ -476,7 +541,7 @@ const TreeItem = React.forwardRef<HTMLDivElement, TreeItemProps>(
         return (
             <div ref={ref} role="tree" className={className} {...props}>
                 <ul>
-                    {data.map((item) => (
+                    {data.map((item: TreeDataItem) => (
                         <li key={item.id}>
                             {item.children ? (
                                 <TreeNode
@@ -491,6 +556,7 @@ const TreeItem = React.forwardRef<HTMLDivElement, TreeItemProps>(
                                     handleDrop={handleDrop}
                                     draggedItem={draggedItem}
                                     renderItem={renderItem}
+                                    enableDragHandle={enableDragHandle}
                                 />
                             ) : (
                                 <TreeLeaf
@@ -503,6 +569,7 @@ const TreeItem = React.forwardRef<HTMLDivElement, TreeItemProps>(
                                     handleDrop={handleDrop}
                                     draggedItem={draggedItem}
                                     renderItem={renderItem}
+                                    enableDragHandle={enableDragHandle}
                                 />
                             )}
                         </li>
@@ -524,6 +591,7 @@ type TreeViewProps = React.HTMLAttributes<HTMLDivElement> & {
     defaultLeafIcon?: any
     onDocumentDrag?: (sourceItem: TreeDataItem, targetItem: TreeDataItem) => void
     renderItem?: (params: TreeRenderItemParams) => React.ReactNode
+    enableDragHandle?: boolean
 }
 
 const TreeView = React.forwardRef<HTMLDivElement, TreeViewProps>(
@@ -538,9 +606,10 @@ const TreeView = React.forwardRef<HTMLDivElement, TreeViewProps>(
             className,
             onDocumentDrag,
             renderItem,
+            enableDragHandle = false,
             ...props
-        },
-        ref
+        }: TreeViewProps,
+        ref: React.Ref<HTMLDivElement>
     ) => {
         const [selectedItemId, setSelectedItemId] = React.useState<
             string | undefined
@@ -614,6 +683,7 @@ const TreeView = React.forwardRef<HTMLDivElement, TreeViewProps>(
                     draggedItem={draggedItem}
                     renderItem={renderItem}
                     level={0}
+                    enableDragHandle={enableDragHandle}
                     {...props}
                 />
                 <div
@@ -645,6 +715,7 @@ export interface TreeTableItem extends TreeDataItem {
 
 type TreeTableProps = {
     data: TreeTableItem[]
+    enableDragHandle?: boolean
 }
 
 const useIsomorphicLayoutEffect =
@@ -718,7 +789,7 @@ const insertTreeItem = (
     return inserted ? updated : items
 }
 
-export function TreeTable({ data }: TreeTableProps) {
+export function TreeTable({ data, enableDragHandle = false }: TreeTableProps) {
     const [selectedItem, setSelectedItem] = useState<TreeTableItem | undefined>(undefined)
     const [treeData, setTreeData] = useState<TreeTableItem[]>(data)
     const [columnWidths, setColumnWidths] = useState<number[]>([
@@ -738,7 +809,7 @@ export function TreeTable({ data }: TreeTableProps) {
     const [containerWidth, setContainerWidth] = useState(0)
     const [isLayoutReady, setIsLayoutReady] = useState(false)
 
-    const totalWidth = columnWidths.reduce((sum, w) => sum + w, 0)
+    const totalWidth = columnWidths.reduce((sum: number, w: number) => sum + w, 0)
 
     useIsomorphicLayoutEffect(() => {
         const node = containerRef.current
@@ -857,7 +928,7 @@ export function TreeTable({ data }: TreeTableProps) {
     }, [columnWidths, baseContainerWidth, totalWidth, hasUserResized])
 
     const leftSpacing = 10
-    const chevronSpace = 24
+    const chevronSpace = enableDragHandle ? 60 : 20
     const totalLeftSpacing = leftSpacing + chevronSpace
     const indentPerLevel = 20
     const finalDividerInset = 8
@@ -870,14 +941,14 @@ export function TreeTable({ data }: TreeTableProps) {
 
     const columnLayoutWidths = useMemo(
         () =>
-            displayColumnWidths.map((width, index) =>
+            displayColumnWidths.map((width: number, index: number) =>
                 index === 0 ? Math.max(width - totalLeftSpacing, 0) : width
             ),
         [displayColumnWidths, totalLeftSpacing]
     )
 
     const gridTemplateColumns = useMemo(
-        () => columnLayoutWidths.map((width) => `${width}px`).join(' '),
+        () => columnLayoutWidths.map((width: number) => `${width}px`).join(' '),
         [columnLayoutWidths]
     )
 
@@ -958,7 +1029,8 @@ export function TreeTable({ data }: TreeTableProps) {
             Math.min(level * indentPerLevel, Math.max(firstColumnBodyWidth - 12, 0)),
             0
         )
-        const firstCellPaddingLeft = indentWidth
+        // 基礎 padding 為 12px (等同於 px-3)，再加上縮排
+        const firstCellPaddingLeft = 12 + indentWidth
 
         return (
             <div className="grid text-sm text-neutral-200" style={rowStyle}>
@@ -967,10 +1039,10 @@ export function TreeTable({ data }: TreeTableProps) {
                         return (
                             <div
                                 key={column.key}
-                                className="flex items-center pr-1"
+                                className="flex items-center"
                                 style={{
                                     paddingLeft: `${firstCellPaddingLeft}px`,
-                                    paddingRight: '6px',
+                                    paddingRight: '12px',
                                 }}
                             >
                                 <span className="flex-1 truncate text-left text-sm text-neutral-100">
@@ -1058,6 +1130,7 @@ export function TreeTable({ data }: TreeTableProps) {
                                 onSelectChange={setSelectedItem}
                                 onDocumentDrag={handleDrag}
                                 renderItem={renderItem}
+                                enableDragHandle={enableDragHandle}
                             />
                         </div>
                     </div>

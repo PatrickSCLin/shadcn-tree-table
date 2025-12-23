@@ -62,5 +62,5 @@ const data: TreeTableItem[] = [
 ]
 
 export default function Demo() {
-  return <TreeTable data={data} />
+  return <TreeTable data={data} enableDragHandle={true} />
 }
